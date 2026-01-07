@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Shaka Player</title>
+
+<!-- Shaka UI CSS -->
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/controls.min.css"/>
+
+<style>
+html,body{
+  margin:0;
+  background:#000;
+  height:100%;
+}
+#container{
+  width:100%;
+  height:100%;
+}
+video{
+  width:100%;
+  height:100%;
+}
+</style>
+</head>
+
+<body>
+
+<div id="container">
+  <video id="video" autoplay></video>
+</div>
+
+<!-- Shaka Player -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/shaka-player/4.7.11/shaka-player.ui.min.js"></script>
+
+<script>
+/* =======================
+   EDIT ONLY THIS SECTION
+   ======================= */
+
+// 🔗 PASTE YOUR MPD LINK HERE
+const MPD_URL =
+"https://otte.live.fly.ww.aiv-cdn.net/sin-nitro/live/clients/dash/enc/ju0ui9uaer/out/v1/6f7a7ec415b9478aaf5b6650d0171d3e/cenc.mpd";
+
+// 🔐 OPTIONAL CLEARKEY (leave empty if none)
+const CLEARKEY_KID = "be319684d8cd2deb408290d7709b53b8";
+const CLEARKEY_KEY = "c23a947185953dbca7ed6375d2878d0c";
+
+/* ======================= */
+
+async function initPlayer(){
+  shaka.polyfill.installAll();
+
+  if(!shaka.Player.isBrowserSupported()){
+    document.body.innerHTML = "Browser not supported";
+    return;
+  }
+
+  const video = document.getElementById("video");
+  const player = new shaka.Player(video);
+
+  // Attach default Shaka UI
+  new shaka.ui.Overlay(player, document.getElementById("container"), video);
+
+  // ClearKey DRM (optional)
+  if(CLEARKEY_KID && CLEARKEY_KEY){
+    player.configure({
+      drm:{
+        clearKeys:{
+          [CLEARKEY_KID]: CLEARKEY_KEY
+        }
+      }
+    });
+  }
+
+  // Error handling
+  player.addEventListener("error", e => {
+    console.error("Shaka Error", e.detail);
+    document.body.innerHTML = `
+      <div style="color:white;
+                  font-family:sans-serif;
+                  display:flex;
+                  align-items:center;
+                  justify-content:center;
+                  height:100vh;
+                  text-align:center">
+        <div>
+          <h2>Playback Failed</h2>
+          <p>This stream cannot be played in a browser.</p>
+        </div>
+      </div>
+    `;
+  });
+
+  try{
+    await player.load(MPD_URL);
+    console.log("Stream loaded");
+  }catch(e){
+    console.error(e);
+  }
+}
+
+initPlayer();
+</script>
+
+</body>
+</html>
